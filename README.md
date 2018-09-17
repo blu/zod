@@ -13,3 +13,56 @@ Compiler success matrix
 | icc                        | does not work as of ver. 18     |
 | msvc                       | does not work as of ver. 2017   |
 
+
+How does a constant-folded destructor invocation look?
+------------------------------------------------------
+
+A constat-folded destructor invocation should appear like a direct funciton call when the destructor is not inlined. For example:
+
+```c
+int main(int argc, char** argv) {
+	begin_scope(0);
+
+	Foo f;
+	construct(0, f, Foo_ctor); // empty ctor, corresponding dtor named Foo_dtor, non-inlined
+
+	end_scope(0);
+	return EXIT_SUCCESS;
+}
+```
+
+Target amd64:
+```
+main:
+        subq    $24, %rsp
+        movq    %rsp, %rdi
+        call    Foo_dtor
+        xorl    %eax, %eax
+        addq    $24, %rsp
+        ret
+```
+Target arm7l
+```
+main:
+        str     lr, [sp, #-4]!
+        sub     sp, sp, #12
+        add     r0, sp, #4
+        bl      Foo_dtor
+        mov     r0, #0
+        add     sp, sp, #12
+        ldmfd   sp!, {pc}
+```
+Target mips32
+```
+main:
+        addiu   $sp,$sp,-40
+        sw      $31,36($sp)
+        jal     Foo_dtor
+        addiu   $4,$sp,24
+        lw      $31,36($sp)
+        move    $2,$0
+        j       $31
+        addiu   $sp,$sp,40
+```
+
+Conversely, when the compiler did not constant-fold the destructor invocation, the code should have an *indirect* function call -- via a register that was previosuly loaded with the address of the destructor, normally from a source on stack.
