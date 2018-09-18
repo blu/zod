@@ -3,6 +3,8 @@ Brief Description
 
 An implementation of zero-runtime-overhead destructors in C, relying on constant-folding optimisations.
 
+For an in-depth account see article on [CNX Software](https://www.cnx-software.com/2018/09/17/zero-overhead-destructors-in-c/).
+
 Compiler success matrix
 -----------------------
 
@@ -41,7 +43,7 @@ main:
         addq    $24, %rsp
         ret
 ```
-Target arm7l
+Target arm7l:
 ```
 main:
         str     lr, [sp, #-4]!
@@ -52,7 +54,7 @@ main:
         add     sp, sp, #12
         ldmfd   sp!, {pc}
 ```
-Target mips32
+Target mips32:
 ```
 main:
         addiu   $sp,$sp,-40
@@ -81,7 +83,7 @@ int main(int argc, char** argv) {
 }
 ```
 
-Target amd64
+Target amd64:
 ```
 main:
         subq    $1048, %rsp
