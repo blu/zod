@@ -19,7 +19,7 @@ Compiler success matrix
 How does a constant-folded destructor invocation look?
 ------------------------------------------------------
 
-A constat-folded destructor invocation should appear like a direct funciton call when the destructor is not inlined. For example:
+A constant-folded destructor invocation should appear like a direct funciton call when the destructor is not inlined. For example:
 
 ```c
 int main(int argc, char** argv) {
