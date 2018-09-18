@@ -66,3 +66,40 @@ main:
 ```
 
 Conversely, when the compiler did not constant-fold the destructor invocation, the code should have an *indirect* function call -- via a register that was previosuly loaded with the address of the destructor, normally from a source on stack.
+
+```c
+int main(int argc, char** argv) {
+    begin_scope(0);
+
+    Foo f;
+    construct(0, f, Foo_ctor);
+
+    __asm volatile ("": : : "memory"); // flush compiler's knowledge of constants that went to memory
+
+    end_scope(0); // we might get an assert check as well if we haven't disabled those
+    return EXIT_SUCCESS;
+}
+```
+
+Target amd64
+```
+main:
+        subq    $1048, %rsp
+        leaq    1024(%rsp), %rax
+        movq    $Foo_dtor, 8(%rsp)
+        movq    %rax, (%rsp)
+        movq    8(%rsp), %rax
+        testq   %rax, %rax
+        je      .L27
+        movq    (%rsp), %rdi
+        call    *%rax
+        xorl    %eax, %eax
+        addq    $1048, %rsp
+        ret
+.L27:
+        movl    $__PRETTY_FUNCTION__.1992, %ecx
+        movl    $16, %edx
+        movl    $.LC0, %esi
+        movl    $.LC3, %edi
+        call    __assert_fail
+```
